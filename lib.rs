@@ -4,16 +4,19 @@
 //! #[macro_use]
 //! extern crate slog;
 //! extern crate slog_bunyan;
-//! extern crate slog_stream;
 //!
-//! use slog::DrainExt;
+//! use slog::Drain;
+//! use std::sync::Mutex;
 //!
 //! fn main() {
 //!     let root = slog::Logger::root(
-//!         slog_stream::stream(
-//!                 std::io::stderr(),
-//!                 slog_bunyan::default()
-//!         ).fuse(), o!("build-id" => "8dfljdf"));
+//!                 Mutex::new(
+//!                     slog_bunyan::default(
+//!                         std::io::stderr()
+//!                     )
+//!                 ).fuse(),
+//!                 o!("build-id" => "8dfljdf")
+//!     );
 //! }
 //! ```
 #![warn(missing_docs)]
@@ -23,11 +26,11 @@ extern crate slog;
 extern crate nix;
 extern crate chrono;
 extern crate slog_json;
-#[cfg(test)]
-extern crate slog_stream;
 
 use slog::Record;
 use slog::Level;
+
+use std::io;
 
 fn get_hostname() -> String {
 
@@ -52,11 +55,12 @@ fn level_to_string(level: Level) -> i8 {
     }
 }
 
-fn new_with_ts_fn<F>(ts_f: F) -> slog_json::FormatBuilder
-    where F: Fn(&Record) -> String + Send + Sync + 'static
+fn new_with_ts_fn<F, W>(io : W, ts_f: F) -> slog_json::JsonBuilder<W>
+    where F: Fn(&Record) -> String + Send + Sync + std::panic::RefUnwindSafe + 'static,
+          W : io::Write
 {
-    slog_json::Format::new()
-        .add_key_values(o!(
+    slog_json::Json::new(io)
+        .add_key_value(o!(
             "pid" => nix::unistd::getpid() as usize,
             "host" => get_hostname(),
             "time" => ts_f,
@@ -73,13 +77,18 @@ fn new_with_ts_fn<F>(ts_f: F) -> slog_json::FormatBuilder
 }
 
 /// Create `slog_json::FormatBuilder` with bunyan key-values
-pub fn new() -> slog_json::FormatBuilder {
-    new_with_ts_fn(|_: &Record| chrono::Local::now().to_rfc3339())
+pub fn new<W>(io : W) -> slog_json::JsonBuilder<W>
+where
+          W : io::Write
+{
+    new_with_ts_fn(io, |_: &Record| chrono::Local::now().to_rfc3339())
 }
 
 /// Create `slog_json::Format` with bunyan key-values
-pub fn default() -> slog_json::Format {
-    new_with_ts_fn(|_: &Record| chrono::Local::now().to_rfc3339()).build()
+pub fn default<W>(io : W) -> slog_json::Json<W>
+where
+          W : io::Write {
+    new_with_ts_fn(io, |_: &Record| chrono::Local::now().to_rfc3339()).build()
 }
 
 #[cfg(test)]
@@ -88,34 +97,56 @@ mod test {
     use super::get_hostname;
     use chrono::{TimeZone, UTC};
     use nix;
-    use slog::{Record, RecordStatic};
-    use slog::Level;
-    use slog_stream::Format;
-    use slog::OwnedKeyValueList;
+    use slog::{Record, RecordStatic, RecordLocation};
+    use slog::{Level, Drain, Logger};
+    use std::sync::{Mutex, Arc};
+    use std::io;
+
+    struct V(Arc<Mutex<Vec<u8>>>);
+
+    impl io::Write for V {
+        fn write(&mut self, buf : &[u8]) -> io::Result<usize> {
+            self.0.lock().unwrap().write(buf)
+        }
+        fn flush(&mut self) -> io::Result<()> {
+            self.0.lock().unwrap().flush()
+        }
+    }
 
     #[test]
     fn trivial() {
-        let format =
-            new_with_ts_fn(|_: &Record| UTC.ymd(2014, 7, 8).and_hms(9, 10, 11).to_rfc3339()).build();
+        let v = Arc::new(Mutex::new(vec![]));
+        {
+            let v = V(v.clone());
+            let drain =
+                new_with_ts_fn(v, |_: &Record| UTC.ymd(2014, 7, 8).and_hms(9, 10, 11).to_rfc3339()).build();
 
 
-        let rs = RecordStatic {
-            level: Level::Info,
-            file: "filepath",
-            line: 11192,
-            column: 0,
-            function: "",
-            module: "modulepath",
-            target: "target"
-        };
+            let rs = RecordStatic {
+                level: Level::Info,
+                location : &RecordLocation {
+                    file: "filepath",
+                    line: 11192,
+                    column: 0,
+                    function: "",
+                    module: "modulepath",
+                },
+                tag : "target"
+            };
 
-        let mut v = vec![];
-        format.format(&mut v, &Record::new(&rs, format_args!("message"), &[]), &OwnedKeyValueList::root(None)).unwrap();
+            let log = Logger::root(Mutex::new(drain).fuse(), o!());
+            log.log(&Record::new(&rs, &format_args!("message"), b!()));
+        }
 
-        assert_eq!(String::from_utf8_lossy(&v),
-                   "{\"pid\":".to_string() + &nix::unistd::getpid().to_string() + ",\"host\":\"" +
-                   &get_hostname() +
-                   "\",\"time\":\"2014-07-08T09:10:11+00:00\",\"level\":30,\"name\":\"slog-rs\",\
-                    \"v\":0,\"msg\":\"message\"}\n");
+        assert_eq!(String::from_utf8_lossy(&(*(*v).lock().unwrap())),
+                   "{".to_string() +
+                   "\"msg\":\"message\"," +
+                   "\"v\":0," +
+                   "\"name\":\"slog-rs\"," +
+                   "\"level\":30," +
+                   "\"time\":\"2014-07-08T09:10:11+00:00\"," +
+                   "\"host\":\"" + &get_hostname() + "\"," +
+                   "\"pid\":" + &nix::unistd::getpid().to_string() +
+                   "}\n");
     }
 }

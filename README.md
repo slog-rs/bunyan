@@ -20,4 +20,6 @@
 
 # slog-bunyan - Bunyan formatter for [slog-rs]
 
+Based on `slog-json`, it will output json with bunyan defined fields.
+
 [slog-rs]: //github.com/slog-rs/slog
