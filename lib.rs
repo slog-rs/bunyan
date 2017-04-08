@@ -27,8 +27,7 @@ extern crate nix;
 extern crate chrono;
 extern crate slog_json;
 
-use slog::Record;
-use slog::Level;
+use slog::{Record, Level, FnValue};
 
 use std::io;
 
@@ -63,16 +62,16 @@ fn new_with_ts_fn<F, W>(io : W, ts_f: F) -> slog_json::JsonBuilder<W>
         .add_key_value(o!(
             "pid" => nix::unistd::getpid() as usize,
             "host" => get_hostname(),
-            "time" => ts_f,
-            "level" => |rinfo : &Record| {
+            "time" => FnValue(ts_f),
+            "level" => FnValue(|rinfo : &Record| {
                 level_to_string(rinfo.level())
-            },
+            }),
             // TODO: slog loggers don't have names...
             "name" => "slog-rs",
             "v" => 0usize,
-            "msg" => |rinfo : &Record| {
+            "msg" => FnValue(|rinfo : &Record| {
                 rinfo.msg().to_string()
-            }
+            })
         ))
 }
 
