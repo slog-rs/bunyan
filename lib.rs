@@ -35,9 +35,9 @@ fn get_hostname() -> String {
 
     let mut buf = vec!(0u8; 256);
     match nix::unistd::gethostname(&mut buf) {
-        Ok(()) => {
+        Ok(hostname_c) => {
             // TODO: BUG: use locale to known encoding?
-            String::from_utf8_lossy(buf.split(|&b| b == 0).next().unwrap_or(&buf)).to_string()
+            hostname_c.to_string_lossy().into()
         }
         Err(_) => "n/a".to_string(),
     }
