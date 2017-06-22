@@ -144,7 +144,7 @@ mod test {
                    "\"name\":\"slog-rs\"," +
                    "\"level\":30," +
                    "\"time\":\"2014-07-08T09:10:11+00:00\"," +
-                   "\"host\":\"" + &get_hostname() + "\"," +
+                   "\"hostname\":\"" + &get_hostname() + "\"," +
                    "\"pid\":" + &nix::unistd::getpid().to_string() +
                    "}\n");
     }
