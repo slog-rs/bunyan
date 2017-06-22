@@ -1,6 +1,6 @@
 [package]
 name = "slog-bunyan"
-version = "2.0.0"
+version = "2.1.0"
 authors = ["Dawid Ciężarkiewicz <dpc@dpc.pw>"]
 description = "Bunyan formatter for slog-rs"
 keywords = ["log", "logging", "structured", "hierarchical"]
