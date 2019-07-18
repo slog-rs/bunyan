@@ -23,8 +23,8 @@
 
 #[macro_use]
 extern crate slog;
-extern crate nix;
 extern crate chrono;
+extern crate hostname;
 extern crate slog_json;
 
 use slog::{Record, Level, FnValue};
@@ -32,14 +32,9 @@ use slog::{Record, Level, FnValue};
 use std::io;
 
 fn get_hostname() -> String {
-
-    let mut buf = vec!(0u8; 256);
-    match nix::unistd::gethostname(&mut buf) {
-        Ok(hostname_c) => {
-            // TODO: BUG: use locale to known encoding?
-            hostname_c.to_string_lossy().into()
-        }
-        Err(_) => "n/a".to_string(),
+    match hostname::get_hostname() {
+        Some(h) => h,
+        None => "n/a".to_string(),
     }
 }
 
@@ -60,7 +55,7 @@ fn new_with_ts_fn<F, W>(io : W, ts_f: F) -> slog_json::JsonBuilder<W>
 {
     slog_json::Json::new(io)
         .add_key_value(o!(
-            "pid" => nix::unistd::getpid() as usize,
+            "pid" => ::std::process::id(),
             "hostname" => get_hostname(),
             "time" => FnValue(ts_f),
             "level" => FnValue(|rinfo : &Record| {
@@ -95,7 +90,6 @@ mod test {
     use super::new_with_ts_fn;
     use super::get_hostname;
     use chrono::{TimeZone, UTC};
-    use nix;
     use slog::{Record, RecordStatic, RecordLocation};
     use slog::{Level, Drain, Logger};
     use std::sync::{Mutex, Arc};
@@ -145,7 +139,7 @@ mod test {
                    "\"level\":30," +
                    "\"time\":\"2014-07-08T09:10:11+00:00\"," +
                    "\"hostname\":\"" + &get_hostname() + "\"," +
-                   "\"pid\":" + &nix::unistd::getpid().to_string() +
+                   "\"pid\":" + &::std::process::id().to_string() +
                    "}\n");
     }
 }
