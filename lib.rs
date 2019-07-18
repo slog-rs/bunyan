@@ -38,14 +38,25 @@ fn get_hostname() -> String {
     }
 }
 
-fn level_to_string(level: Level) -> i8 {
-    match level {
-        Level::Critical => 60,
-        Level::Error => 50,
-        Level::Warning => 40,
-        Level::Info => 30,
-        Level::Debug => 20,
-        Level::Trace => 10,
+enum BunyanLevel {
+    Fatal = 60,
+    Error = 50,
+    Warn = 40,
+    Info = 30,
+    Debug = 20,
+    Trace = 10
+}
+
+impl From<Level> for BunyanLevel {
+    fn from(l: Level) -> Self {
+        match l {
+            Level::Critical => BunyanLevel::Fatal,
+            Level::Error => BunyanLevel::Error,
+            Level::Warning => BunyanLevel::Warn,
+            Level::Info => BunyanLevel::Info,
+            Level::Debug => BunyanLevel::Debug,
+            Level::Trace => BunyanLevel::Trace
+        }
     }
 }
 
@@ -59,7 +70,7 @@ fn new_with_ts_fn<F, W>(io : W, ts_f: F) -> slog_json::JsonBuilder<W>
             "hostname" => get_hostname(),
             "time" => FnValue(ts_f),
             "level" => FnValue(|rinfo : &Record| {
-                level_to_string(rinfo.level())
+                BunyanLevel::from(rinfo.level()) as i8
             }),
             // TODO: slog loggers don't have names...
             "name" => "slog-rs",
