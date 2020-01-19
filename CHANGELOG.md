@@ -4,7 +4,8 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
-## [Unreleased]
+## 2.2.0 - 2020-01-19
+## Changed
 
 * Add with_name API for setting bunyan name field
 * Replace level_to_string function with BunyanLevel enum
