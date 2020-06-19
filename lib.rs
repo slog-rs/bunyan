@@ -34,9 +34,9 @@ use std::io;
 const DEFAULT_NAME: &str = "slog-rs";
 
 fn get_hostname() -> String {
-    match hostname::get_hostname() {
-        Some(h) => h,
-        None => "n/a".to_string(),
+    match hostname::get() {
+        Ok(h) => h.to_string_lossy().into_owned(),
+        Err(_) => "n/a".to_string(),
     }
 }
 
@@ -113,7 +113,7 @@ mod test {
     use super::get_hostname;
     use super::new_with_ts_fn;
     use super::DEFAULT_NAME;
-    use chrono::{TimeZone, UTC};
+    use chrono::{TimeZone, Utc};
     use slog::{Drain, Level, Logger};
     use slog::{Record, RecordLocation, RecordStatic};
     use std::io;
@@ -136,7 +136,7 @@ mod test {
         {
             let v = V(v.clone());
             let drain = new_with_ts_fn(DEFAULT_NAME, v, |_: &Record| {
-                UTC.ymd(2014, 7, 8).and_hms(9, 10, 11).to_rfc3339()
+                Utc.ymd(2014, 7, 8).and_hms(9, 10, 11).to_rfc3339()
             })
             .build();
 
@@ -180,7 +180,7 @@ mod test {
             let v = V(v.clone());
             let name = "test-name-123";
             let drain = new_with_ts_fn(name, v, |_: &Record| {
-                UTC.ymd(2014, 7, 8).and_hms(9, 10, 11).to_rfc3339()
+                Utc.ymd(2014, 7, 8).and_hms(9, 10, 11).to_rfc3339()
             })
             .build();
 
