@@ -21,13 +21,7 @@
 //! ```
 #![warn(missing_docs)]
 
-#[macro_use]
-extern crate slog;
-extern crate chrono;
-extern crate hostname;
-extern crate slog_json;
-
-use slog::{FnValue, Level, Record};
+use slog::{o, FnValue, Level, Record};
 
 use std::io;
 
@@ -64,7 +58,7 @@ impl From<Level> for BunyanLevel {
 
 fn new_with_ts_fn<F, W>(name: &'static str, io: W, ts_f: F) -> slog_json::JsonBuilder<W>
 where
-    F: Fn(&Record) -> String + Send + Sync + std::panic::RefUnwindSafe + 'static,
+    F: Fn(&Record) -> Option<String> + Send + Sync + std::panic::RefUnwindSafe + 'static,
     W: io::Write,
 {
     slog_json::Json::new(io).add_key_value(o!(
@@ -105,7 +99,12 @@ pub fn with_name<W>(name: &'static str, io: W) -> slog_json::JsonBuilder<W>
 where
     W: io::Write,
 {
-    new_with_ts_fn(name, io, |_: &Record| chrono::Local::now().to_rfc3339())
+    new_with_ts_fn(name, io, |_: &Record| {
+        time::OffsetDateTime::now_local()
+            .unwrap_or_else(|_| time::OffsetDateTime::now_utc())
+            .format(&time::format_description::well_known::Rfc3339)
+            .ok()
+    })
 }
 
 #[cfg(test)]
@@ -113,11 +112,12 @@ mod test {
     use super::get_hostname;
     use super::new_with_ts_fn;
     use super::DEFAULT_NAME;
-    use chrono::{TimeZone, Utc};
+    use slog::{b, o};
     use slog::{Drain, Level, Logger};
     use slog::{Record, RecordLocation, RecordStatic};
     use std::io;
     use std::sync::{Arc, Mutex};
+    use time::macros::datetime;
 
     struct V(Arc<Mutex<Vec<u8>>>);
 
@@ -136,7 +136,9 @@ mod test {
         {
             let v = V(v.clone());
             let drain = new_with_ts_fn(DEFAULT_NAME, v, |_: &Record| {
-                Utc.ymd(2014, 7, 8).and_hms(9, 10, 11).to_rfc3339()
+                datetime!(2014-07-08 09:10:11 UTC)
+                    .format(&time::format_description::well_known::Rfc3339)
+                    .ok()
             })
             .build();
 
@@ -163,7 +165,7 @@ mod test {
                 + "\"v\":0,"
                 + "\"name\":\"slog-rs\","
                 + "\"level\":30,"
-                + "\"time\":\"2014-07-08T09:10:11+00:00\","
+                + "\"time\":\"2014-07-08T09:10:11Z\","
                 + "\"hostname\":\""
                 + &get_hostname()
                 + "\","
@@ -180,7 +182,9 @@ mod test {
             let v = V(v.clone());
             let name = "test-name-123";
             let drain = new_with_ts_fn(name, v, |_: &Record| {
-                Utc.ymd(2014, 7, 8).and_hms(9, 10, 11).to_rfc3339()
+                datetime!(2014-07-08 09:10:11 UTC)
+                    .format(&time::format_description::well_known::Rfc3339)
+                    .ok()
             })
             .build();
 
@@ -207,7 +211,7 @@ mod test {
                 + "\"v\":0,"
                 + "\"name\":\"test-name-123\","
                 + "\"level\":30,"
-                + "\"time\":\"2014-07-08T09:10:11+00:00\","
+                + "\"time\":\"2014-07-08T09:10:11Z\","
                 + "\"hostname\":\""
                 + &get_hostname()
                 + "\","
