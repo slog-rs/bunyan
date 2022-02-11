@@ -21,13 +21,7 @@
 //! ```
 #![warn(missing_docs)]
 
-#[macro_use]
-extern crate slog;
-extern crate chrono;
-extern crate hostname;
-extern crate slog_json;
-
-use slog::{FnValue, Level, Record};
+use slog::{o, FnValue, Level, Record};
 
 use std::io;
 
@@ -114,6 +108,7 @@ mod test {
     use super::new_with_ts_fn;
     use super::DEFAULT_NAME;
     use chrono::{TimeZone, Utc};
+    use slog::{b, o};
     use slog::{Drain, Level, Logger};
     use slog::{Record, RecordLocation, RecordStatic};
     use std::io;
