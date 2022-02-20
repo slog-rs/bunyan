@@ -5,6 +5,8 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
+
+## 2.4.0 - 2022-02-19
 ### Changed
 
 * Switch from `chrono` to `time` (PR #11 by @ShellWowza)
