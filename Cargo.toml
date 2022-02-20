@@ -27,6 +27,6 @@ path = "lib.rs"
 
 [dependencies]
 slog = "2"
-slog-json = "2"
+slog-json = "2.6"
 hostname = "0.3.0"
 time = { version = "0.3.6", features = ["formatting", "local-offset", "macros"] }

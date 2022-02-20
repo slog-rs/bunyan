@@ -13,6 +13,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 * Bump Minimum Supported Rust Version (MSRV) to 1.53
     * This is required because of the `time` crate
 * Switch from Travis to Github Actions
+* Require `slog-json` version >= `2.6`
 
 ## 2.3.0 - 2021-01-10
 ### Changed
