@@ -16,6 +16,8 @@ readme = "README.md"
 # Please do not bump this unnecessarily.
 # Changing this bumps the minor version for semver (2.x for semver).
 #
+# NOTE: Changing this requires updating github actions
+#
 # The first version of Cargo that supports this field was in Rust 1.56.0.
 # In older releases, the field will be ignored, and Cargo will display a warning.
 rust-version = "1.53"
