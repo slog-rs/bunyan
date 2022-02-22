@@ -1,6 +1,6 @@
 [package]
 name = "slog-bunyan"
-version = "2.3.0"
+version = "2.4.0"
 edition = "2018"
 authors = ["Dawid Ciężarkiewicz <dpc@dpc.pw>"]
 description = "Bunyan formatter for slog-rs"
@@ -11,11 +11,22 @@ homepage = "https://github.com/slog-rs/slog"
 repository = "https://github.com/slog-rs/bunyan"
 readme = "README.md"
 
+# This is our Minimum Supported Rust Version (MSRV)
+#
+# Please do not bump this unnecessarily.
+# Changing this bumps the minor version for semver (2.x for semver).
+#
+# NOTE: Changing this requires updating github actions
+#
+# The first version of Cargo that supports this field was in Rust 1.56.0.
+# In older releases, the field will be ignored, and Cargo will display a warning.
+rust-version = "1.53"
+
 [lib]
 path = "lib.rs"
 
 [dependencies]
 slog = "2"
-slog-json = "2"
+slog-json = "2.6"
 hostname = "0.3.0"
 time = { version = "0.3.6", features = ["formatting", "local-offset", "macros"] }

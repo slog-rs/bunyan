@@ -4,6 +4,19 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
+## [Unreleased]
+
+## 2.4.0 - 2022-02-19
+### Changed
+
+* Switch from `chrono` to `time` (PR #11 by @ShellWowza)
+    * Based on disucssion in the PR, this actually corrects a bug in the time formatting output
+* Upgrade to using Rust 2018
+* Bump Minimum Supported Rust Version (MSRV) to 1.53
+    * This is required because of the `time` crate
+* Switch from Travis to Github Actions
+* Require `slog-json` version >= `2.6`
+
 ## 2.3.0 - 2021-01-10
 ### Changed
 
