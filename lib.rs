@@ -159,7 +159,7 @@ mod test {
         }
 
         assert_eq!(
-            String::from_utf8_lossy(&(*(*v).lock().unwrap())),
+            String::from_utf8_lossy(&(*v).lock().unwrap()),
             "{".to_string()
                 + "\"msg\":\"message\","
                 + "\"v\":0,"
@@ -205,7 +205,7 @@ mod test {
         }
 
         assert_eq!(
-            String::from_utf8_lossy(&(*(*v).lock().unwrap())),
+            String::from_utf8_lossy(&(*v).lock().unwrap()),
             "{".to_string()
                 + "\"msg\":\"message\","
                 + "\"v\":0,"
