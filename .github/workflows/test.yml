@@ -1,8 +1,7 @@
 # We use `actions-rs` for most of our actions
 #
-# This file is for the main tests. clippy & rustfmt are seperate workflows
-#
-# This is mostly copied from slog-rs repo ;)
+# This file is for the main tests & clippy.
+# Running rustfmt is a separate workflow.
 on: [push, pull_request]
 name: Cargo Test
 
@@ -28,19 +27,74 @@ jobs:
     strategy:
       fail-fast: false # Even if one job fails we still want to see the other ones
       matrix:
-        # 1.59 is MSRV. Keep this in sync with Cargo.toml
-        rust: [1.59, stable, nightly]
-        # NOTE: We don't really have any "feature combos" to test.
+        rust:
+          # Minimum Supported Rust Version: 1.59
+          #
+          # This is hardcoded and needs to be in sync with Cargo.toml and the README
+          - 1.59
+          # A recent version of stable rust that is hardcoded.
+          #
+          # This should be kept as up to date as possible.
+          #
+          # This is used so that clippy & tests are run on a reliable reference point.
+          # If clippy has any warnings, this will fail the build (we run with --deny warnings)
+          - 1.72
+          # The most recent version of stable rust (automatically updated)
+          #
+          # Sometimes, this is exactly the same as the hardcoded right above.
+          # However sometimes it will be automatically updated to something a little newer.
+          #
+          # If there are new clippy lints in the automatic update that aren't
+          # in the hardcoded versions, they will _NOT_ fail the build.
+          # This is true even if they are set to deny by default (clippy does this for some 'correctness' lints).
+          # They will simply be regular warnings.
+          - stable
+          - nightly
+        # NOTE: Features to test must be specified manually. They are applied to all versions separately.
         #
-        # We just have default features and nothing else :)
+        # This has the advantage of being more flexibile and thorough
+        # This has the disadvantage of being more vebrose
+        #
+        # Specific feature combos can be overridden per-version with 'include' and 'ecclude'
+        features:
+          - ""
 
     steps:
-      - uses: actions/checkout@v2
-      - uses: actions-rs/toolchain@v1
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@master
         with:
           toolchain: ${{ matrix.rust }}
-          override: true
-      # NOTE: This crate is simple enough we don't need seperate check/test actions
+          components: clippy
+      - name: Check
+        # A failing `cargo check` always ends the build
+        run: |
+          cargo check --all-targets --verbose --features "${{ matrix.features }}"
+        # A failing `cargo check` always fails the build
+        continue-on-error: false
       - name: Test
         run: |
-          cargo test --verbose
+          cargo test --all-targets --verbose --features "${{ matrix.features }}"
+
+        # We require tests to succeed on all the feature combinations.
+        #
+        # However, we can grant special exceptions for the Minimum Supported Rust Version
+        # if there is a really good reason (like a dependency that requires a newer version).
+        continue-on-error: false
+
+      - name: Clippy
+        # With the exception of nightly, we use --deny warnings to treat warnings on errors.
+        run: |
+          cargo clippy --all-targets --verbose --features "${{ matrix.features }}" -- --deny "${{ matrix.rust != 'nightly' && 'warnings' || 'clippy::correctness' }}"
+        # Clippy is required to succeed on hardcoded versions, and may not give any warnings.
+        #
+        # However, on automatically updated versions of rust (both stable & nightly) we allow clippy to fail.
+        # This is in case automatic updates have introduced new lints that would give warnings/errors
+        # about code that was previously allowed.
+        #
+        # This is the main reason that we have a 'hardcoded recent stable' version.
+        # We want as many lints from recent stable possible
+        # but don't want the surprises of automatic updates to our stable rust.
+        #
+        # Also, include an explicit exception for Rust 1.56.
+        # We don't want to deal with the fact clippy changed the names of some lints.
+        continue-on-error: ${{ !contains(matrix.rust, '1.') || matrix.rust == '1.56' }}
