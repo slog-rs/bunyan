@@ -6,6 +6,10 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Update to Rust 2021
+* Update MSRV to Rust 1.59
+* Update minimum `time` crate to 0.3.15
+
 ## 2.4.0 - 2022-02-19
 ### Changed
 
