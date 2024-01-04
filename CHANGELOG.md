@@ -6,6 +6,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Add `nested-values` feature which enables `slog/nested-values` (PR #14)
 * Update to Rust 2021
 * Update MSRV to Rust 1.59
 * Update minimum `time` crate to 0.3.15
