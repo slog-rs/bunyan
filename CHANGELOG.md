@@ -6,6 +6,9 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+## 2.5.0 - 2024-01-04
+### Changed
+
 * Add `nested-values` feature which enables `slog/nested-values` (PR #14)
 * Update to Rust 2021
 * Update MSRV to Rust 1.59

@@ -1,6 +1,6 @@
 [package]
 name = "slog-bunyan"
-version = "2.4.0"
+version = "2.5.0"
 edition = "2021"
 authors = ["Dawid Ciężarkiewicz <dpc@dpc.pw>"]
 description = "Bunyan formatter for slog-rs"
